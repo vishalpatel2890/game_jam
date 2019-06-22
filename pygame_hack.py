@@ -13,7 +13,7 @@ win = pygame.display.set_mode((screenWidth,screenHeight))
 pygame.display.set_caption("First Game")
 
 # This goes outside the while loop, near the top of the program
-bg = pygame.image.load('Game/bg.jpg')
+bg = pygame.image.load('Game/bulkhead-walls.png')
 char = pygame.image.load('Game/standing.png')
 
 clock = pygame.time.Clock()
@@ -28,8 +28,8 @@ def redrawGameWindow():
     pygame.display.update()
 
 #mainloop
-man = player(200, 400, 64,64)
-goblin = enemy(100, 410, 64, 64, 300)
+man = player(200, 330, 64,64)
+goblin = enemy(100, 330, 64, 64, 300)
 
 bullets = []
 run = True
