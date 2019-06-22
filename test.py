@@ -120,7 +120,7 @@ def main():
     pg.display.set_caption(CAPTION)
     pg.display.set_mode(SCREEN_SIZE)
     PLAY_IMAGE = pg.image.load("Game/L1.png").convert_alpha()
-    POND_IMAGE = pg.image.load("mountains.png")
+    POND_IMAGE = pg.image.load("bulkhead-wallsx3.png")
     Control().main_loop()
     pg.quit()
     sys.exit()
