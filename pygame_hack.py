@@ -28,7 +28,7 @@ def redrawGameWindow():
     pygame.display.update()
 
 #mainloop
-man = player(200, 330, 64,64)
+man = player(200, 330, 64, 64)
 goblin = enemy(100, 330, 64, 64, 300)
 
 bullets = []
@@ -36,8 +36,15 @@ run = True
 while run:
     clock.tick(27)
 
+    keys = pygame.key.get_pressed()
+
+    if shootLoop > 0:
+        shootLoop += 1
+    if shootLoop > 6:
+        shootLoop = 0
+
     for event in pygame.event.get():
-        if event.type == pygame.QUIT:
+        if event.type == pygame.QUIT or keys[pygame.K_ESCAPE]:
             run = False
 
     for bullet in bullets:
@@ -46,16 +53,17 @@ while run:
         else:
             bullets.pop(bullets.index(bullet))
 
-    keys = pygame.key.get_pressed()
 
-    if keys[pygame.K_SPACE]:
+    if keys[pygame.K_SPACE] and shootLoop == 0:
         if man.left:
             facing = -1
         else:
             facing = 1
 
-        if len(bullets) < 5:
-            bullets.append(projectile(round(man.x + man.width //2), round(man.y + man.height//2), 6, (0,0,0), facing))
+        if len(bullets) < 7:
+            bullets.append(projectile(round(man.x + man.width //2), round(man.y + man.height//2), facing))
+        shootLoop = 1
+
 
     if keys[pygame.K_LEFT] and man.x > man.vel:
         man.x -= man.vel
@@ -67,32 +75,24 @@ while run:
         man.right = True
         man.left = False
         man.standing = False
-    elif keys[pygame.K_UP] and man.y > man.vel:
-        man.y -= man.vel
-    elif keys[pygame.K_DOWN] and man.y < 500 - man.height - man.vel*2:
-        man.y += man.vel
     else:
         man.standing = True
         man.walkCount = 0
 
-
-
-    # if not(man.isJump):
-    #     if keys[pygame.K_UP]:
-    #         man.isJump = True
-    #         man.right = False
-    #         man.left = False
-    #         man.walkCount = 0
-    # else:
-    #     if man.jumpCount >= -10:
-    #         neg = 1
-    #         if man.jumpCount < 0:
-    #             neg = -1
-    #         man.y -= (man.jumpCount ** 2) * 0.5 * neg
-    #         man.jumpCount -= 1
-    #     else:
-    #         man.isJump = False
-    #         man.jumpCount = 10
+    if not(man.isJump):
+        if keys[pygame.K_UP]:
+            man.isJump = True
+            man.walkCount = 0
+    else:
+        if man.jumpCount >= -10:
+            neg = 1
+            if man.jumpCount < 0:
+                neg = -1
+            man.y -= (man.jumpCount ** 2) * 0.5 * neg
+            man.jumpCount -= 1
+        else:
+            man.isJump = False
+            man.jumpCount = 10
 
     redrawGameWindow()
 
