@@ -14,7 +14,16 @@ pygame.display.set_caption("First Game")
 
 # This goes outside the while loop, near the top of the program
 bg = pygame.image.load('Game/bg.jpg')
-char = pygame.image.load('Game/standing.png')
+bgWidth, bgHeight = bg.get_rect().size
+
+stageWidth, stageHeight = (bgWidth * 2, bgHeight * 2)
+stagePosX = 0
+stagePosY = 480
+
+startScrollPosX = 250
+
+playerPosX = 64
+platerPosY = 400
 
 clock = pygame.time.Clock()
 
@@ -28,7 +37,7 @@ def redrawGameWindow():
     pygame.display.update()
 
 #mainloop
-man = player(200, 400, 64,64)
+man = player(64, 400, 64,64)
 goblin = enemy(100, 410, 64, 64, 300)
 
 bullets = []
@@ -74,8 +83,6 @@ while run:
     else:
         man.standing = True
         man.walkCount = 0
-
-
 
     # if not(man.isJump):
     #     if keys[pygame.K_UP]:
