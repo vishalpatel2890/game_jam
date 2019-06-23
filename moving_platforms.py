@@ -19,7 +19,7 @@ introImg = pg.image.load('introScreen.png')
 
 
 CAPTION = "Moving Platforms"
-SCREEN_SIZE = (700,500)
+SCREEN_SIZE = (1200,700)
 
 
 class _Physics(object):
@@ -417,7 +417,7 @@ class Control(object):
 		self.win_text,self.win_rect = self.make_text()
 		self.obstacles = self.make_obstacles()
 
-	def make_text(self, message = "Jump down the column to win!"):
+	def make_text(self, message = "Head this way!"):
 		"""Renders a text object. Text is only rendered once."""
 
 		# Added functionality for custom message and placement
@@ -465,13 +465,14 @@ class Control(object):
 				  MovingBlock(pg.Color("olivedrab"), (640,544,32,16), 688, 1),
 				  MovingBlock(pg.Color("olivedrab"), (544,256,32,16), 704, 1),
 				  MovingBlock(pg.Color("olivedrab"), (32,224,32,16), 704, 1),
+				  MovingBlock(pg.Color("olivedrab"), (1344,96,96,16), 1344, 0),
+				  MovingBlock(pg.Color("olivedrab"), (1264,144,48,16), 1364, 0, speed=7),
 				  MovingBlock(pg.Color("olivedrab"), (96,304,128,16), 352, 0, speed=3)
 				]
 		enemy = [
-			Cube(pg.Color("red"), (1344,96,96,16), 1344, 0),
-			Cube(pg.Color("red"), (160,896,16,16), 320, 0),
-			Cube(pg.Color("red"), (256,768,16,16), 640, 0),
-			Cube(pg.Color("red"), (1264,144,48,16), 1364, 0, speed=7)
+			Cube(pg.Color("red"), (160,880,32,32), 320, 0),
+			Cube(pg.Color("red"), (480,880,32,32), 720, 0),
+			Cube(pg.Color("red"), (1344, 64, 32, 32), 1408, 0),
 
 # 			Cube(pg.Color("red"), (20,720,16,16), 225, 0),
 # 			Cube(pg.Color("red"), (20,720,16,16), 325, 0)
