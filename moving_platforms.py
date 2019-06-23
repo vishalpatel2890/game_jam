@@ -24,7 +24,7 @@ idleLeftEnemy = pg.transform.flip(pg.transform.scale(pg.image.load("images/cube_
 
 
 CAPTION = "Moving Platforms"
-SCREEN_SIZE = (700,500)
+SCREEN_SIZE = (1200,700)
 
 
 class _Physics(object):
@@ -211,113 +211,6 @@ class Block(pg.sprite.Sprite):
 		
 	def draw(self, screen):
 		screen.blit(self.image, self.rect)
-
-class imgBlock(pg.sprite.Sprite):
-	"""A class representing solid obstacles."""
-	def __init__(self, image, rect):
-		"""The color is an (r,g,b) tuple; rect is a rect-style argument."""
-		pg.sprite.Sprite.__init__(self)
-		self.image = pg.Surface(self.rect.size).convert()
-		self.image.fill(color)
-
-# 		self.image = pg.image.load('plat_narrow.png')
-		self.rect = pg.Rect(rect)
-
-# 		self.image.fill(color)
-		self.type = "normal"
-
-class imgMovingBlock(imgBlock):
-	"""A class to represent horizontally and vertically moving blocks."""
-	def __init__(self, image, rect, end, axis, delay=500, speed=2, start=None):
-		"""
-		The moving block will travel in the direction of axis (0 or 1)
-		between rect.topleft and end. The delay argument is the amount of time
-		(in miliseconds) to pause when reaching an endpoint; speed is the
-		platforms speed in pixels/frame; if specified start is the place
-		within the blocks path to start (defaulting to rect.topleft).
-		"""
-		Block.__init__(self, image, rect)
-		self.start = self.rect[axis]
-		if start:
-			self.rect[axis] = start
-		self.axis = axis
-		self.end = end
-		self.timer = 0.0
-		self.delay = delay
-		self.speed = speed
-		self.waiting = False
-		self.type = "moving"
-
-	def update(self, player, obstacles):
-		"""Update position. This should be done before moving any actors."""
-		obstacles = obstacles.copy()
-		obstacles.remove(self)
-		now = pg.time.get_ticks()
-		if not self.waiting:
-			speed = self.speed
-			start_passed = self.start >= self.rect[self.axis]+speed
-			end_passed = self.end <= self.rect[self.axis]+speed
-			if start_passed or end_passed:
-				if start_passed:
-					speed = self.start-self.rect[self.axis]
-				else:
-					speed = self.end-self.rect[self.axis]
-				self.change_direction(now)
-			self.rect[self.axis] += speed
-			self.move_player(now, player, obstacles, speed)
-		elif now-self.timer > self.delay:
-			self.waiting = False
-
-	def move_player(self, now, player, obstacles, speed):
-		"""
-		Moves the player both when on top of, or bumped by the platform.
-		Collision checks are in place to prevent the block pushing the player
-		through a wall.
-		"""
-		if player.on_moving is self or pg.sprite.collide_rect(self,player):
-			axis = self.axis
-			offset = (speed, speed)
-			player.check_collisions(offset, axis, obstacles)
-			if pg.sprite.collide_rect(self, player):
-				if self.speed > 0:
-					self.rect[axis] = player.rect[axis]-self.rect.size[axis]
-				else:
-					self.rect[axis] = player.rect[axis]+player.rect.size[axis]
-				self.change_direction(now)
-
-	def change_direction(self, now):
-		"""Called when the platform reaches an endpoint or has no more room."""
-		self.waiting = True
-		self.walkCount = 0
-		self.timer = now
-		self.speed *= -1
-		self.left = not self.left
-		self.right = not self.right
-
-        
-class imgCube(imgMovingBlock):
-
-	def __init__(self,image,rect,end,axis, delay=100, speed=3, start=None):
-		"""Use type on collision checks"""
-		MovingBlock.__init__(self, image, rect, end, axis, delay=500, speed=2, start=None)
-		self.type = "enemy"
-	
-	def move_player(self, now, player, obstacles, speed):
-		"""
-		Moves the player when on top of, or destroys if bumped by the cube.
-		"""
-		if player.on_moving is self:
-			axis = self.axis
-			offset = (speed, speed)
-			player.check_collisions(offset, axis, obstacles)
-			if pg.sprite.collide_rect(self, player):
-				if self.speed > 0:
-					self.rect[axis] = player.rect[axis]-self.rect.size[axis]
-				else:
-					self.rect[axis] = player.rect[axis]+player.rect.size[axis]
-				self.change_direction(now)
-		elif pg.sprite.collide_rect(self,player):
-			player.alive = False
         
         
 
@@ -428,16 +321,16 @@ class Cube(MovingBlock):
 		# the blits were offset manually to draw the character inside of the character box. Surely there's a better way to do this.
 		if not self.waiting:
 			if self.left:
-				win.blit(walkLeftEnemy[self.walkCount//2], (self.rect[0]-10,self.rect[1]-8))
+				win.blit(walkLeftEnemy[self.walkCount//2], (self.rect[0]+1,self.rect[1]-2))
 				self.walkCount += 1
 			elif self.right:
-				win.blit(walkRightEnemy[self.walkCount//2], (self.rect[0]-20,self.rect[1]-8))
+				win.blit(walkRightEnemy[self.walkCount//2], (self.rect[0]-1,self.rect[1]-2))
 				self.walkCount +=1
 		else:
 			if self.right:
-				win.blit(idleRightEnemy, (self.rect[0]-20,self.rect[1]-8))
+				win.blit(idleRightEnemy, (self.rect[0],self.rect[1]-2))
 			else:
-				win.blit(idleLeftEnemy, (self.rect[0]-10,self.rect[1]-8))
+				win.blit(idleLeftEnemy, (self.rect[0],self.rect[1]-2))
 
 class Control(object):
 	"""Class for managing event loop and game states."""
@@ -485,6 +378,19 @@ class Control(object):
 				  Block(pg.Color("darkgreen"), (64,192,256,16)),
 				  Block(pg.Color("darkgreen"), (448,208,112,16)),
 				  Block(pg.Color("darkgreen"), (656,224,16,240)),
+				  Block(pg.Color("darkgreen"), (944,208,16,256)),
+				  Block(pg.Color("darkgreen"), (656,432,176,16)),
+				  Block(pg.Color("darkgreen"), (864,464,272,16)),
+				  Block(pg.Color("darkgreen"), (864,416,32,64)),
+				  Block(pg.Color("darkgreen"), (864,416,32,64)),
+				  Block(pg.Color("darkgreen"), (688,208,16,16)),
+				  Block(pg.Color("darkgreen"), (816,208,16,16)),
+				  Block(pg.Color("darkgreen"), (928,208,16,16)),
+				  Block(pg.Color("darkgreen"), (1040,208,16,16)),
+				  Block(pg.Color("darkgreen"), (1136,208,32,16)),
+				  Block(pg.Color("darkgreen"), (1248,208,32,16)),
+				  Block(pg.Color("darkgreen"), (1488,64,16,576)),
+				  Block(pg.Color("darkgreen"), (1488,608,64,16)),
 				]
 		moving = [
 				MovingBlock(pg.Color("olivedrab"), (1248,816,48,16), 1428, 0),
@@ -492,11 +398,17 @@ class Control(object):
 				  MovingBlock(pg.Color("olivedrab"), (640,544,32,16), 688, 1),
 				  MovingBlock(pg.Color("olivedrab"), (544,256,32,16), 704, 1),
 				  MovingBlock(pg.Color("olivedrab"), (32,224,32,16), 704, 1),
+				  MovingBlock(pg.Color("olivedrab"), (1344,96,96,16), 1344, 0),
+				  MovingBlock(pg.Color("olivedrab"), (1264,144,48,16), 1364, 0, speed=7),
 				  MovingBlock(pg.Color("olivedrab"), (96,304,128,16), 352, 0, speed=3)
 				]
-		enemy = [Cube(pg.Color("red"), (20,720,16,16), 225, 0),
-				Cube(pg.Color("red"), (20,720,16,16), 325, 0),
-				Cube(pg.Color("red"), (70,875,16,16), 325, 0)
+		enemy = [
+			Cube(pg.Color("red"), (160,882,32,30), 320, 0),
+			Cube(pg.Color("red"), (480,882,32,30), 720, 0),
+			Cube(pg.Color("red"), (1344,66,32,30), 1408, 0),
+
+# 			Cube(pg.Color("red"), (20,720,16,16), 225, 0),
+# 			Cube(pg.Color("red"), (20,720,16,16), 325, 0)
 					]
 
 		return pg.sprite.Group(walls, static, moving, enemy)
