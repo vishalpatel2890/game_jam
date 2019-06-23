@@ -361,12 +361,32 @@ class Control(object):
 			self.display_fps()
 			if not self.player.alive:
 				self.done = True
-		if self.player.alive:
+#		if self.player.alive:
 			# add victory screen or high score
-		elif self.player.alive:
+#        elif self.player.alive:
 			# add code to print death message
 			# add code to ask player if they'd like to play again
+        
+# -------------------------------------------
+#        INTRO / DEATH SCREEN CODE
+# -------------------------------------------
+        
+	def game_intro(self):
+		intro = True
+		while intro:
+			for event in pg.event.get():
+				#print(event)
+				if event.type == pg.QUIT:
+					pg.quit()
+					quit()
 
+# Image to display, we can also put text over it with score / press _____ to start                    
+                    
+			self.display.blit(introImg,(0,0))
+			if event.type == pygame.QUIT or self.keys[pg.K_ESCAPE]:
+				quitgame
+			pg.display.update()
+			clock.tick(15)
 
 if __name__ == "__main__":
 	os.environ['SDL_VIDEO_CENTERED'] = '1'
@@ -374,6 +394,7 @@ if __name__ == "__main__":
 	pg.display.set_caption(CAPTION)
 	pg.display.set_mode(SCREEN_SIZE)
 	run_it = Control()
+	run_it.game_intro()
 	run_it.main_loop()
 	pg.quit()
 	sys.exit()
