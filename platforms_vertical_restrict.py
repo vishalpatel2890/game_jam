@@ -335,7 +335,7 @@ class Control(object):
 							  (500,700,50,20), 730, 0, start=730),
 				  MovingBlock(pg.Color("olivedrab"),
 							  (780,700,50,20), 895, 0, speed=-1)]
-		enemy = [Cube(pg.Color("red"), (20,720,75,20), 325, 0)
+		enemy = [Cube(pg.Color("red"), (700,470,75,20), 800, 0)
 					]
 
 		return pg.sprite.Group(walls, static, moving, enemy)
