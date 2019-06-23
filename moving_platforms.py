@@ -9,6 +9,11 @@ import pygame as pg
 import time
 import random
 
+walkRight = [pg.transform.scale(pg.image.load(f"images/hero_walk_{f'{x:02d}'}.png"), (32,32)) for x in range(1,21)]
+walkLeft = [pg.transform.flip(pg.transform.scale(pg.image.load(f"images/hero_walk_{f'{x:02d}'}.png"), (32,32)), True, False) for x in range(1,21)]
+idleRight = pg.transform.scale(pg.image.load("images/hero_idle.png"), (32,32))
+idleLeft = pg.transform.flip(pg.transform.scale(pg.image.load("images/hero_idle.png"), (32,32)), True, False)
+
 clock = pg.time.Clock()
 introImg = pg.image.load('introScreen.png')
 
@@ -48,11 +53,9 @@ class Player(_Physics, pg.sprite.Sprite):
 		"""
 		_Physics.__init__(self)
 		pg.sprite.Sprite.__init__(self)
-		self.image = pg.Surface((32,32)).convert()
-# 		self.image.fill(pg.Color("red"))
-
-		self.image = pg.image.load('32hero_idle.png')
-		self.rect = self.image.get_rect(topleft=location)
+		self.image = pg.Surface((20,30)).convert()
+		self.image.fill(pg.Color("red"))
+		self.rect = self.image.get_rect(topleft=(location[0],location[1]+2))
 		self.speed = speed
 		self.jump_power = -9.0
 		self.jump_cut_magnitude = -3.0
@@ -60,14 +63,27 @@ class Player(_Physics, pg.sprite.Sprite):
 		self.collide_below = False
 		#Add death variable
 		self.alive=True
+		self.left = False
+		self.right = True
+		self.walkCount = 0
+		self.standing = True
 
 	def check_keys(self, keys):
 		"""Find the player's self.x_vel based on currently held keys."""
 		self.x_vel = 0
 		if keys[pg.K_LEFT] or keys[pg.K_a]:
 			self.x_vel -= self.speed
-		if keys[pg.K_RIGHT] or keys[pg.K_d]:
+			self.left = True
+			self.right = False
+			self.standing = False
+		elif keys[pg.K_RIGHT] or keys[pg.K_d]:
 			self.x_vel += self.speed
+			self.left = False
+			self.right = True
+			self.standing = False
+		else:
+			self.standing = True
+			self.walkCount = 0
 
 	def get_position(self, obstacles):
 		"""Calculate the player's position this frame, including collisions."""
@@ -157,10 +173,25 @@ class Player(_Physics, pg.sprite.Sprite):
 		self.get_position(obstacles)
 		self.physics_update()
 
-	def draw(self, surface):
-		"""Blit the player to the target surface."""
-		surface.blit(self.image, self.rect)
+	def draw(self, win):
+	# 	"""Blit the player to the target surface."""
+		# win.blit(self.image, self.rect) # drawing hitbox for testing
+		if self.walkCount + 1 >= 40:
+			self.walkCount = 0
 
+		# the blits were offset manually to draw the character inside of the character box. Surely there's a better way to do this.
+		if not(self.standing) and not self.fall:
+			if self.left:
+				win.blit(walkLeft[self.walkCount//2], (self.rect[0]-3,self.rect[1]-2))
+				self.walkCount += 1
+			elif self.right:
+				win.blit(walkRight[self.walkCount//2], (self.rect[0]-8,self.rect[1]-2))
+				self.walkCount +=1
+		else:
+			if self.right:
+				win.blit(idleRight, (self.rect[0]-8,self.rect[1]-2))
+			else:
+				win.blit(idleLeft, (self.rect[0]-3,self.rect[1]-2))
 
 class Block(pg.sprite.Sprite):
 	"""A class representing solid obstacles."""
@@ -386,13 +417,13 @@ class Control(object):
 		self.win_text,self.win_rect = self.make_text()
 		self.obstacles = self.make_obstacles()
 
-	def make_text(self, message = "You win!"):
+	def make_text(self, message = "Jump down the column to win!"):
 		"""Renders a text object. Text is only rendered once."""
 
 		# Added functionality for custom message and placement
-		font = pg.font.Font(None, 100)
-		text = font.render(message, True, (100,100,175))
-		rect = text.get_rect(centerx=self.level_rect.centerx, y=100)
+		font = pg.font.Font(None, 30)
+		text = font.render(message, True, (255,255,255))
+		rect = text.get_rect(x=1024, y=64)
 		return text, rect
 
 	def make_obstacles(self):
@@ -414,6 +445,19 @@ class Control(object):
 				  Block(pg.Color("darkgreen"), (64,192,256,16)),
 				  Block(pg.Color("darkgreen"), (448,208,112,16)),
 				  Block(pg.Color("darkgreen"), (656,224,16,240)),
+				  Block(pg.Color("darkgreen"), (944,208,16,256)),
+				  Block(pg.Color("darkgreen"), (656,432,176,16)),
+				  Block(pg.Color("darkgreen"), (864,464,272,16)),
+				  Block(pg.Color("darkgreen"), (864,416,32,64)),
+				  Block(pg.Color("darkgreen"), (864,416,32,64)),
+				  Block(pg.Color("darkgreen"), (688,208,16,16)),
+				  Block(pg.Color("darkgreen"), (816,208,16,16)),
+				  Block(pg.Color("darkgreen"), (928,208,16,16)),
+				  Block(pg.Color("darkgreen"), (1040,208,16,16)),
+				  Block(pg.Color("darkgreen"), (1136,208,32,16)),
+				  Block(pg.Color("darkgreen"), (1248,208,32,16)),
+				  Block(pg.Color("darkgreen"), (1488,64,16,576)),
+				  Block(pg.Color("darkgreen"), (1488,608,64,16)),
 				]
 		moving = [
 				MovingBlock(pg.Color("olivedrab"), (1248,816,48,16), 1428, 0),
@@ -423,8 +467,14 @@ class Control(object):
 				  MovingBlock(pg.Color("olivedrab"), (32,224,32,16), 704, 1),
 				  MovingBlock(pg.Color("olivedrab"), (96,304,128,16), 352, 0, speed=3)
 				]
-		enemy = [Cube(pg.Color("red"), (20,720,16,16), 225, 0),
-				Cube(pg.Color("red"), (20,720,16,16), 325, 0)
+		enemy = [
+			Cube(pg.Color("red"), (1344,96,96,16), 1344, 0),
+			Cube(pg.Color("red"), (160,896,16,16), 320, 0),
+			Cube(pg.Color("red"), (256,768,16,16), 640, 0),
+			Cube(pg.Color("red"), (1264,144,48,16), 1364, 0, speed=7)
+
+# 			Cube(pg.Color("red"), (20,720,16,16), 225, 0),
+# 			Cube(pg.Color("red"), (20,720,16,16), 325, 0)
 					]
 
 		return pg.sprite.Group(walls, static, moving, enemy)
