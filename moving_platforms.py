@@ -17,6 +17,11 @@ walkLeft = [pg.transform.flip(pg.transform.scale(pg.image.load(f"images/hero_wal
 idleRight = pg.transform.scale(pg.image.load("images/hero_idle.png"), (32,32))
 idleLeft = pg.transform.flip(pg.transform.scale(pg.image.load("images/hero_idle.png"), (32,32)), True, False)
 
+walkRightEnemy = [pg.transform.scale(pg.image.load(f"images/cube_g_walk_{f'{x:02d}'}.png"), (32,32)) for x in range(1,16)]
+walkLeftEnemy = [pg.transform.flip(pg.transform.scale(pg.image.load(f"images/cube_g_walk_{f'{x:02d}'}.png"), (32,32)), True, False) for x in range(1,16)]
+idleRightEnemy = pg.transform.scale(pg.image.load("images/cube_g_idle.png"), (32,32))
+idleLeftEnemy = pg.transform.flip(pg.transform.scale(pg.image.load("images/cube_g_idle.png"), (32,32)), True, False)
+
 
 CAPTION = "Moving Platforms"
 SCREEN_SIZE = (700,500)
@@ -203,6 +208,9 @@ class Block(pg.sprite.Sprite):
 		self.image = pg.Surface(self.rect.size).convert()
 		self.image.fill(color)
 		self.type = "normal"
+		
+	def draw(self, screen):
+		screen.blit(self.image, self.rect)
 
 class imgBlock(pg.sprite.Sprite):
 	"""A class representing solid obstacles."""
@@ -280,8 +288,11 @@ class imgMovingBlock(imgBlock):
 	def change_direction(self, now):
 		"""Called when the platform reaches an endpoint or has no more room."""
 		self.waiting = True
+		self.walkCount = 0
 		self.timer = now
 		self.speed *= -1
+		self.left = not self.left
+		self.right = not self.right
 
         
 class imgCube(imgMovingBlock):
@@ -375,6 +386,9 @@ class MovingBlock(Block):
 		self.timer = now
 		self.speed *= -1
 
+	def draw(self, screen):
+		screen.blit(self.image, self.rect)
+
 
 class Cube(MovingBlock):
 
@@ -382,6 +396,10 @@ class Cube(MovingBlock):
 		"""Use type on collision checks"""
 		MovingBlock.__init__(self, color, rect, end, axis, delay=500, speed=2, start=None)
 		self.type = "enemy"
+		self.walkCount = 0
+		self.speed = speed
+		self.left = True
+		self.right = False
 	
 	def move_player(self, now, player, obstacles, speed):
 		"""
@@ -399,6 +417,27 @@ class Cube(MovingBlock):
 				self.change_direction(now)
 		elif pg.sprite.collide_rect(self,player):
 			player.alive = False
+
+	def draw(self, win):
+	# 	"""Blit cube g to cube sprites"""
+
+		win.blit(self.image, self.rect) # drawing hitbox for testing
+		if self.walkCount + 1 >= 30:
+			self.walkCount = 0
+
+		# the blits were offset manually to draw the character inside of the character box. Surely there's a better way to do this.
+		if not self.waiting:
+			if self.left:
+				win.blit(walkLeftEnemy[self.walkCount//2], (self.rect[0]-10,self.rect[1]-8))
+				self.walkCount += 1
+			elif self.right:
+				win.blit(walkRightEnemy[self.walkCount//2], (self.rect[0]-20,self.rect[1]-8))
+				self.walkCount +=1
+		else:
+			if self.right:
+				win.blit(idleRightEnemy, (self.rect[0]-20,self.rect[1]-8))
+			else:
+				win.blit(idleLeftEnemy, (self.rect[0]-10,self.rect[1]-8))
 
 class Control(object):
 	"""Class for managing event loop and game states."""
@@ -456,7 +495,8 @@ class Control(object):
 				  MovingBlock(pg.Color("olivedrab"), (96,304,128,16), 352, 0, speed=3)
 				]
 		enemy = [Cube(pg.Color("red"), (20,720,16,16), 225, 0),
-				Cube(pg.Color("red"), (20,720,16,16), 325, 0)
+				Cube(pg.Color("red"), (20,720,16,16), 325, 0),
+				Cube(pg.Color("red"), (70,875,16,16), 325, 0)
 					]
 
 		return pg.sprite.Group(walls, static, moving, enemy)
@@ -496,7 +536,19 @@ class Control(object):
 		"""
 		self.level.fill(pg.Color("lightblue"))
 		self.level.blit(self.background.image, self.background.rect)
-		self.obstacles.draw(self.level)
+		# self.obstacles.draw(self.level)
+		for sprite in self.obstacles:
+			if sprite.type != 'enemy':
+				sprite.draw(self.level)
+			else:
+				if sprite.speed < 0:
+					sprite.left = True
+					sprite.right = False
+				if sprite.speed > 0:
+					sprite.right = True
+					sprite.left = False
+				
+				sprite.draw(self.level)
 		self.level.blit(self.win_text, self.win_rect)
 		self.player.draw(self.level)
 		self.screen.blit(self.level, (0,0), self.viewport)
