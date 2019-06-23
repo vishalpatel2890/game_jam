@@ -7,10 +7,13 @@ Basic moving platforms using only rectangle collision.
 import os
 import sys
 import pygame as pg
-
+import time
 
 CAPTION = "Moving Platforms"
-SCREEN_SIZE = (700,500)
+# set variable for screen_size to stop hard coding it
+SCREEN_WIDTH = 700
+SCREEN_HEIGHT = 500
+SCREEN_SIZE = (SCREEN_WIDTH,SCREEN_HEIGHT)
 
 
 class _Physics(object):
@@ -253,7 +256,7 @@ class Cube(MovingBlock):
 
 class Control(object):
 	"""Class for managing event loop and game states."""
-	def __init__(self):
+	def __init__(self, high_score=0):
 		"""Initalize the display and prepare game objects."""
 		self.screen = pg.display.get_surface()
 		self.screen_rect = self.screen.get_rect()
@@ -267,11 +270,12 @@ class Control(object):
 		self.level_rect = self.level.get_rect()
 		self.win_text,self.win_rect = self.make_text()
 		self.obstacles = self.make_obstacles()
+		self.high_score=high_score
 
 	def make_text(self, message = "You win!"):
 		"""Renders a text object. Text is only rendered once."""
 
-		# Added functionality for custom message and placement
+		# Added functionality for custom message
 		font = pg.font.Font(None, 100)
 		text = font.render(message, True, (100,100,175))
 		rect = text.get_rect(centerx=self.level_rect.centerx, y=100)
@@ -363,9 +367,30 @@ class Control(object):
 				self.done = True
 		if self.player.alive:
 			# add victory screen or high score
-		elif self.player.alive:
-			# add code to print death message
-			# add code to ask player if they'd like to play again
+			pass
+		elif self.done:
+			self.death_screen()
+
+	def death_screen(self):
+		self.level.fill(pg.Color('black'))
+		font = pg.font.Font(None, 100)
+		text = font.render('Oh boy, looks like we got another gelatinous, uh, kid cube situation. Should I send in another one?',
+			 True, (100,100,175))
+		rect = text.get_rect(centerx=self.player.rect[0], y=self.player.rect[1])
+		self.level.blit(text,rect)
+		while self.done:		
+			for event in pg.event.get():
+				if event.type == pg.QUIT or self.keys[pg.K_ESCAPE]:
+					return None
+				elif event.type == pg.KEYDOWN:
+					self.done = False
+					text = font.render('Alright, here comes a fresh one.',
+				 		True, (100,100,175))
+					self.level.blit(text,rect)
+					time.sleep(4)
+		self.__init__()
+		self.main_loop()
+		
 
 
 if __name__ == "__main__":
