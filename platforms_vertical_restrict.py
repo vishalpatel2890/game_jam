@@ -8,9 +8,10 @@ import os
 import sys
 import pygame as pg
 
-walkRight = [pg.transform.scale(pg.image.load(f"images/hero_walk_{f'{x:02d}'}.png"), (64,64)) for x in range(1,21)]
-walkLeft = [pg.transform.flip(pg.transform.scale(pg.image.load(f"images/hero_walk_{f'{x:02d}'}.png"), (64,64)), True, False) for x in range(1,21)]
-
+walkRight = [pg.transform.scale(pg.image.load(f"images/hero_walk_{f'{x:02d}'}.png"), (32,32)) for x in range(1,21)]
+walkLeft = [pg.transform.flip(pg.transform.scale(pg.image.load(f"images/hero_walk_{f'{x:02d}'}.png"), (32,32)), True, False) for x in range(1,21)]
+idleRight = pg.transform.scale(pg.image.load("images/hero_idle.png"), (32,32))
+idleLeft = pg.transform.flip(pg.transform.scale(pg.image.load("images/hero_idle.png"), (32,32)), True, False)
 
 CAPTION = "Moving Platforms"
 SCREEN_SIZE = (700,500)
@@ -45,7 +46,7 @@ class Player(_Physics, pg.sprite.Sprite):
 		"""
 		_Physics.__init__(self)
 		pg.sprite.Sprite.__init__(self)
-		self.image = pg.Surface((30,55)).convert()
+		self.image = pg.Surface((28,28)).convert()
 		self.image.fill(pg.Color("red"))
 		self.rect = self.image.get_rect(topleft=location)
 		self.speed = speed
@@ -175,18 +176,30 @@ class Player(_Physics, pg.sprite.Sprite):
 			self.walkCount = 0
 
 		# the blits were offset manually to draw the character inside of the character box. Surely there's a better way to do this.
+		# if not(self.standing) and not self.fall:
+		# 	if self.left:
+		# 		win.blit(walkLeft[self.walkCount//2], (self.rect[0]-10,self.rect[1]-8))
+		# 		self.walkCount += 1
+		# 	elif self.right:
+		# 		win.blit(walkRight[self.walkCount//2], (self.rect[0]-20,self.rect[1]-8))
+		# 		self.walkCount +=1
+		# else:
+		# 	if self.right:
+		# 		win.blit(idleRight, (self.rect[0]-20,self.rect[1]-8))
+		# 	else:
+		# 		win.blit(idleLeft, (self.rect[0]-10,self.rect[1]-8))
 		if not(self.standing) and not self.fall:
 			if self.left:
-				win.blit(walkLeft[self.walkCount//2], (self.rect[0]-10,self.rect[1]-8))
+				win.blit(walkLeft[self.walkCount//2], (self.rect[0],self.rect[1]))
 				self.walkCount += 1
 			elif self.right:
-				win.blit(walkRight[self.walkCount//2], (self.rect[0]-20,self.rect[1]-8))
+				win.blit(walkRight[self.walkCount//2], (self.rect[0],self.rect[1]))
 				self.walkCount +=1
 		else:
 			if self.right:
-				win.blit(walkRight[0], (self.rect[0]-20,self.rect[1]-8))
+				win.blit(idleRight, (self.rect[0],self.rect[1]))
 			else:
-				win.blit(walkLeft[0], (self.rect[0]-10,self.rect[1]-8))
+				win.blit(idleLeft, (self.rect[0],self.rect[1]))
 
 
 class Block(pg.sprite.Sprite):
@@ -328,7 +341,7 @@ class Control(object):
 				  Block(pg.Color("darkgreen"), (400,740,30,40))]
 		moving = [MovingBlock(pg.Color("olivedrab"), (60,465,48,16), 880, 0),
 				  MovingBlock(pg.Color("olivedrab"),
-							  (420,430,100,20), 550, 1, speed=3, delay=200),
+							(420,430,100,20), 550, 1, speed=3, delay=200),
 				  MovingBlock(pg.Color("olivedrab"),
 							  (450,700,50,20), 930, 1, start=930),
 				  MovingBlock(pg.Color("olivedrab"),
