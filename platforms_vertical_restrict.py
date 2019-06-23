@@ -170,22 +170,23 @@ class Player(_Physics, pg.sprite.Sprite):
 	def draw(self, win):
 	# 	"""Blit the player to the target surface."""
 
-		win.blit(self.image, self.rect) # adding hitbox for testing
+		win.blit(self.image, self.rect) # drawing hitbox for testing
 		if self.walkCount + 1 >= 40:
 			self.walkCount = 0
 
+		# the blits were offset manually to draw the character inside of the character box. Surely there's a better way to do this.
 		if not(self.standing) and not self.fall:
 			if self.left:
-				win.blit(walkLeft[self.walkCount//2], (self.rect[0],self.rect[1]))
+				win.blit(walkLeft[self.walkCount//2], (self.rect[0]-10,self.rect[1]-8))
 				self.walkCount += 1
 			elif self.right:
-				win.blit(walkRight[self.walkCount//2], (self.rect[0],self.rect[1]))
+				win.blit(walkRight[self.walkCount//2], (self.rect[0]-20,self.rect[1]-8))
 				self.walkCount +=1
 		else:
 			if self.right:
-				win.blit(walkRight[0], (self.rect[0],self.rect[1]))
+				win.blit(walkRight[0], (self.rect[0]-20,self.rect[1]-8))
 			else:
-				win.blit(walkLeft[0], (self.rect[0],self.rect[1]))
+				win.blit(walkLeft[0], (self.rect[0]-10,self.rect[1]-8))
 
 
 class Block(pg.sprite.Sprite):
