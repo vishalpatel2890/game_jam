@@ -6,25 +6,17 @@ Basic moving platforms using only rectangle collision.
 import os
 import sys
 import pygame as pg
-import time
-import random
 
-clock = pg.time.Clock()
-introImg = pg.image.load('introScreen.png')
-
-walkRight = [pg.transform.scale(pg.image.load(f"images/hero_walk_{f'{x:02d}'}.png"), (32,32)) for x in range(1,21)]
-walkLeft = [pg.transform.flip(pg.transform.scale(pg.image.load(f"images/hero_walk_{f'{x:02d}'}.png"), (32,32)), True, False) for x in range(1,21)]
-idleRight = pg.transform.scale(pg.image.load("images/hero_idle.png"), (32,32))
-idleLeft = pg.transform.flip(pg.transform.scale(pg.image.load("images/hero_idle.png"), (32,32)), True, False)
-
-walkRightEnemy = [pg.transform.scale(pg.image.load(f"images/cube_g_walk_{f'{x:02d}'}.png"), (32,32)) for x in range(1,16)]
-walkLeftEnemy = [pg.transform.flip(pg.transform.scale(pg.image.load(f"images/cube_g_walk_{f'{x:02d}'}.png"), (32,32)), True, False) for x in range(1,16)]
-idleRightEnemy = pg.transform.scale(pg.image.load("images/cube_g_idle.png"), (32,32))
-idleLeftEnemy = pg.transform.flip(pg.transform.scale(pg.image.load("images/cube_g_idle.png"), (32,32)), True, False)
+walkRight = [pg.transform.scale(pg.image.load(f"images/hero_walk_{f'{x:02d}'}.png"), (64,64)) for x in range(1,21)]
+walkLeft = [pg.transform.flip(pg.transform.scale(pg.image.load(f"images/hero_walk_{f'{x:02d}'}.png"), (64,64)), True, False) for x in range(1,21)]
 
 
 CAPTION = "Moving Platforms"
-SCREEN_SIZE = (1200,700)
+SCREEN_SIZE = (700,500)
+
+bg = pg.image.load('Game/bulkhead-walls.png')
+bgX = 0
+bgX2 = bg.get_width()
 
 
 class _Physics(object):
@@ -42,12 +34,6 @@ class _Physics(object):
 		else:
 			self.y_vel = 0
 
-class background(pg.sprite.Sprite):
-	def __init__(self, image_file, location):
-		pg.sprite.Sprite.__init__(self)  #call Sprite initializer
-		self.image = pg.image.load(image_file)
-		self.rect = self.image.get_rect()
-		self.rect.left, self.rect.top = location            
 
 class Player(_Physics, pg.sprite.Sprite):
 	"""Class representing our player."""
@@ -58,9 +44,9 @@ class Player(_Physics, pg.sprite.Sprite):
 		"""
 		_Physics.__init__(self)
 		pg.sprite.Sprite.__init__(self)
-		self.image = pg.Surface((20,30)).convert()
+		self.image = pg.Surface((30,55)).convert()
 		self.image.fill(pg.Color("red"))
-		self.rect = self.image.get_rect(topleft=(location[0],location[1]+2))
+		self.rect = self.image.get_rect(topleft=location)
 		self.speed = speed
 		self.jump_power = -9.0
 		self.jump_cut_magnitude = -3.0
@@ -178,25 +164,28 @@ class Player(_Physics, pg.sprite.Sprite):
 		self.get_position(obstacles)
 		self.physics_update()
 
+
+
 	def draw(self, win):
 	# 	"""Blit the player to the target surface."""
-		# win.blit(self.image, self.rect) # drawing hitbox for testing
+
+		win.blit(self.image, self.rect) # drawing hitbox for testing
 		if self.walkCount + 1 >= 40:
 			self.walkCount = 0
 
 		# the blits were offset manually to draw the character inside of the character box. Surely there's a better way to do this.
 		if not(self.standing) and not self.fall:
 			if self.left:
-				win.blit(walkLeft[self.walkCount//2], (self.rect[0]-3,self.rect[1]-2))
+				win.blit(walkLeft[self.walkCount//2], (self.rect[0]-10,self.rect[1]-8))
 				self.walkCount += 1
 			elif self.right:
-				win.blit(walkRight[self.walkCount//2], (self.rect[0]-8,self.rect[1]-2))
+				win.blit(walkRight[self.walkCount//2], (self.rect[0]-20,self.rect[1]-8))
 				self.walkCount +=1
 		else:
 			if self.right:
-				win.blit(idleRight, (self.rect[0]-8,self.rect[1]-2))
+				win.blit(walkRight[0], (self.rect[0]-20,self.rect[1]-8))
 			else:
-				win.blit(idleLeft, (self.rect[0]-3,self.rect[1]-2))
+				win.blit(walkLeft[0], (self.rect[0]-10,self.rect[1]-8))
 
 
 class Block(pg.sprite.Sprite):
@@ -208,11 +197,7 @@ class Block(pg.sprite.Sprite):
 		self.image = pg.Surface(self.rect.size).convert()
 		self.image.fill(color)
 		self.type = "normal"
-		
-	def draw(self, screen):
-		screen.blit(self.image, self.rect)
-        
-        
+
 
 class MovingBlock(Block):
 	"""A class to represent horizontally and vertically moving blocks."""
@@ -279,9 +264,6 @@ class MovingBlock(Block):
 		self.timer = now
 		self.speed *= -1
 
-	def draw(self, screen):
-		screen.blit(self.image, self.rect)
-
 
 class Cube(MovingBlock):
 
@@ -289,10 +271,6 @@ class Cube(MovingBlock):
 		"""Use type on collision checks"""
 		MovingBlock.__init__(self, color, rect, end, axis, delay=500, speed=2, start=None)
 		self.type = "enemy"
-		self.walkCount = 0
-		self.speed = speed
-		self.left = True
-		self.right = False
 	
 	def move_player(self, now, player, obstacles, speed):
 		"""
@@ -308,29 +286,8 @@ class Cube(MovingBlock):
 				else:
 					self.rect[axis] = player.rect[axis]+player.rect.size[axis]
 				self.change_direction(now)
-		elif pg.sprite.collide_rect(self,player):
+		elif pg.sprite.collide_rect(self, player):
 			player.alive = False
-
-	def draw(self, win):
-	# 	"""Blit cube g to cube sprites"""
-
-#		win.blit(self.image, self.rect) # drawing hitbox for testing
-		if self.walkCount + 1 >= 30:
-			self.walkCount = 0
-
-		# the blits were offset manually to draw the character inside of the character box. Surely there's a better way to do this.
-		if not self.waiting:
-			if self.left:
-				win.blit(walkLeftEnemy[self.walkCount//2], (self.rect[0]+1,self.rect[1]-2))
-				self.walkCount += 1
-			elif self.right:
-				win.blit(walkRightEnemy[self.walkCount//2], (self.rect[0]-1,self.rect[1]-2))
-				self.walkCount +=1
-		else:
-			if self.right:
-				win.blit(idleRightEnemy, (self.rect[0],self.rect[1]-2))
-			else:
-				win.blit(idleLeftEnemy, (self.rect[0],self.rect[1]-2))
 
 class Control(object):
 	"""Class for managing event loop and game states."""
@@ -342,74 +299,42 @@ class Control(object):
 		self.fps = 60.0
 		self.keys = pg.key.get_pressed()
 		self.done = False
-		self.player = Player((50,875), 4)
-		self.background = background('background.png', [0,0])
+		self.player = Player((50,475), 4)
 		self.viewport = self.screen.get_rect()
-		self.level = pg.Surface((1568,928)).convert()
+		self.level = pg.Surface((4000,670)).convert()
 		self.level_rect = self.level.get_rect()
 		self.win_text,self.win_rect = self.make_text()
 		self.obstacles = self.make_obstacles()
 
-	def make_text(self, message = "Head this way!"):
+	def make_text(self, message = "You win!"):
 		"""Renders a text object. Text is only rendered once."""
 
 		# Added functionality for custom message and placement
-		font = pg.font.Font(None, 30)
-		text = font.render(message, True, (255,255,255))
-		rect = text.get_rect(x=1024, y=64)
+		font = pg.font.Font(None, 100)
+		text = font.render(message, True, (100,100,175))
+		rect = text.get_rect(centerx=self.level_rect.centerx, y=100)
 		return text, rect
 
 	def make_obstacles(self):
 		"""Adds some arbitrarily placed obstacles to a sprite.Group."""
-		"""left x, y, width, depth """
-		walls = [Block(pg.Color("chocolate"), (0,912,1568,16)),
-				 Block(pg.Color("chocolate"), (0,0,16,1536)),
-				Block(pg.Color("chocolate"), (1552,0,20,912)),
-				Block(pg.Color("chocolate"), (16,752,1216,16)),
-				]
-		static = [
-				Block(pg.Color("darkgreen"), (1024,576,32,176)),
-				  Block(pg.Color("darkgreen"), (768,544,32,208)),
-				  Block(pg.Color("darkgreen"), (928,480,32,224)),
-				  Block(pg.Color("darkgreen"), (800,688,64,16)),
-				  Block(pg.Color("darkgreen"), (832,624,64,16)),
-				  Block(pg.Color("darkgreen"), (864,576,64,16)),
-				  Block(pg.Color("darkgreen"), (496,304,16,480)),
-				  Block(pg.Color("darkgreen"), (64,192,256,16)),
-				  Block(pg.Color("darkgreen"), (448,208,112,16)),
-				  Block(pg.Color("darkgreen"), (656,224,16,240)),
-				  Block(pg.Color("darkgreen"), (944,208,16,256)),
-				  Block(pg.Color("darkgreen"), (656,432,176,16)),
-				  Block(pg.Color("darkgreen"), (864,464,272,16)),
-				  Block(pg.Color("darkgreen"), (864,416,32,64)),
-				  Block(pg.Color("darkgreen"), (864,416,32,64)),
-				  Block(pg.Color("darkgreen"), (688,208,16,16)),
-				  Block(pg.Color("darkgreen"), (816,208,16,16)),
-				  Block(pg.Color("darkgreen"), (928,208,16,16)),
-				  Block(pg.Color("darkgreen"), (1040,208,16,16)),
-				  Block(pg.Color("darkgreen"), (1136,208,32,16)),
-				  Block(pg.Color("darkgreen"), (1248,208,32,16)),
-				  Block(pg.Color("darkgreen"), (1488,64,16,576)),
-				  Block(pg.Color("darkgreen"), (1488,608,64,16)),
-				]
-		moving = [
-				MovingBlock(pg.Color("olivedrab"), (1248,816,48,16), 1428, 0), 
-				  MovingBlock(pg.Color("olivedrab"), (1056,640,64,16), 1312, 0),
-				  MovingBlock(pg.Color("olivedrab"), (640,544,32,16), 688, 1),
-				  MovingBlock(pg.Color("olivedrab"), (544,256,32,16), 704, 1),
-				  MovingBlock(pg.Color("olivedrab"), (32,224,32,16), 704, 1),
-				  MovingBlock(pg.Color("olivedrab"), (1344,96,96,16), 1344, 0),
-				  MovingBlock(pg.Color("olivedrab"), (1264,144,48,16), 1364, 0, speed=9),
-				  MovingBlock(pg.Color("olivedrab"), (96,304,128,16), 352, 0, speed=3)
-				]
-		enemy = [
-			Cube(pg.Color("red"), (160,880,32,32), 320, 0),
-			Cube(pg.Color("red"), (480,880,32,32), 720, 0),
-			Cube(pg.Color("red"), (48,720,32,32), 464, 0, speed=5),
-			Cube(pg.Color("red"), (1344, 64, 32, 32), 1408, 0, speed=6),
-
-# 			Cube(pg.Color("red"), (20,720,16,16), 225, 0),
-# 			Cube(pg.Color("red"), (20,720,16,16), 325, 0)
+		walls = [Block(pg.Color(0,0,0), (0,535,4000,0)), # vertical thickness of zero to make it invisible
+				 Block(pg.Color("chocolate"), (0,0,20,1000)),]
+				#  Block(pg.Color("chocolate"), (980,0,20,1000))]
+		static = [Block(pg.Color("darkgreen"), (250,780,200,100)),
+				  Block(pg.Color("darkgreen"), (20,360,880,40)),
+				  Block(pg.Color("darkgreen"), (130,470,200,215)),
+				  Block(pg.Color("darkgreen"), (20,760,30,20)),
+				  Block(pg.Color("darkgreen"), (400,740,30,40))]
+		moving = [MovingBlock(pg.Color("olivedrab"), (60,465,48,16), 880, 0),
+				  MovingBlock(pg.Color("olivedrab"),
+							  (420,430,100,20), 550, 1, speed=3, delay=200),
+				  MovingBlock(pg.Color("olivedrab"),
+							  (450,700,50,20), 930, 1, start=930),
+				  MovingBlock(pg.Color("olivedrab"),
+							  (500,700,50,20), 730, 0, start=730),
+				  MovingBlock(pg.Color("olivedrab"),
+							  (780,700,50,20), 895, 0, speed=-1)]
+		enemy = [Cube(pg.Color("red"), (700,470,75,20), 800, 0)
 					]
 
 		return pg.sprite.Group(walls, static, moving, enemy)
@@ -447,21 +372,9 @@ class Control(object):
 		Draw all necessary objects to the level surface, and then draw
 		the viewport section of the level to the display surface.
 		"""
-		self.level.fill(pg.Color("lightblue"))
-		self.level.blit(self.background.image, self.background.rect)
-		# self.obstacles.draw(self.level)
-		for sprite in self.obstacles:
-			if sprite.type != 'enemy':
-				sprite.draw(self.level)
-			else:
-				if sprite.speed < 0:
-					sprite.left = True
-					sprite.right = False
-				if sprite.speed > 0:
-					sprite.right = True
-					sprite.left = False
-				
-				sprite.draw(self.level)
+		# self.level.fill(pg.Color("lightblue"))
+		self.level.blit(bg, (0,0))
+		self.obstacles.draw(self.level)
 		self.level.blit(self.win_text, self.win_rect)
 		self.player.draw(self.level)
 		self.screen.blit(self.level, (0,0), self.viewport)
@@ -482,32 +395,15 @@ class Control(object):
 			self.display_fps()
 			if not self.player.alive:
 				self.done = True
-#		if self.player.alive:
+		# if self.player.alive:
+        #     pass
 			# add victory screen or high score
-#        elif self.player.alive:
+		# elif self.player.alive:
+        #     pass
+			
 			# add code to print death message
 			# add code to ask player if they'd like to play again
-        
-# -------------------------------------------
-#        INTRO / DEATH SCREEN CODE
-# -------------------------------------------
-        
-# 	def game_intro(self):
-# 		intro = True
-# 		while intro:
-# 			for event in pg.event.get():
-# 				#print(event)
-# 				if event.type == pg.QUIT:
-# 					pg.quit()
-# 					quit()
 
-# # Image to display, we can also put text over it with score / press _____ to start                    
-                    
-# 			self.display.blit(introImg,(0,0))
-# 			if event.type == pg.QUIT or self.keys[pg.K_ESCAPE]:
-# 				quitgame
-# 			pg.display.update()
-# 			clock.tick(15)
 
 if __name__ == "__main__":
 	os.environ['SDL_VIDEO_CENTERED'] = '1'
@@ -515,7 +411,6 @@ if __name__ == "__main__":
 	pg.display.set_caption(CAPTION)
 	pg.display.set_mode(SCREEN_SIZE)
 	run_it = Control()
-# 	run_it.game_intro()
 	run_it.main_loop()
 	pg.quit()
 sys.exit()
