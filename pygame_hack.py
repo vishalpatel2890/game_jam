@@ -30,9 +30,10 @@ def redrawGameWindow():
 #mainloop
 man = player(200, 330, 64, 64)
 goblin = enemy(100, 330, 64, 64, 300)
-
+shootLoop = 0
 bullets = []
 run = True
+
 while run:
     clock.tick(27)
 
