@@ -10,6 +10,10 @@ import time
 import random
 
 clock = pg.time.Clock()
+
+# Initialize the joysticks
+pg.joystick.init()
+
 introImg = pg.image.load('introScreen.png')
 
 walkRight = [pg.transform.scale(pg.image.load(f"images/hero_walk_{f'{x:02d}'}.png"), (32,32)) for x in range(1,21)]
@@ -25,6 +29,35 @@ idleLeftEnemy = pg.transform.flip(pg.transform.scale(pg.image.load("images/cube_
 
 CAPTION = "Moving Platforms"
 SCREEN_SIZE = (600,600)
+
+joystick_count = pg.joystick.get_count()
+
+		# For each joystick:
+for i in range(joystick_count):
+	joystick = pg.joystick.Joystick(i)
+	joystick.init()
+
+		# Get the name from the OS for the controller/joystick
+	name = joystick.get_name()
+
+			# Usually axis run in pairs, up/down for one, and left/right for
+			# the other.
+	axes = joystick.get_numaxes()
+
+	for i in range( axes ):
+		axis = joystick.get_axis( i )
+
+	buttons = joystick.get_numbuttons()
+
+	for i in range( buttons ):
+		button = joystick.get_button( i )
+
+			# Hat switch. All or nothing for direction, not like joysticks.
+			# Value comes back in an array.
+	hats = joystick.get_numhats()
+
+	for i in range( hats ):
+		hat = joystick.get_hat( i )
 
 
 class _Physics(object):
@@ -47,7 +80,7 @@ class background(pg.sprite.Sprite):
 		pg.sprite.Sprite.__init__(self)  #call Sprite initializer
 		self.image = pg.image.load(image_file)
 		self.rect = self.image.get_rect()
-		self.rect.left, self.rect.top = location            
+		self.rect.left, self.rect.top = location			
 
 class Player(_Physics, pg.sprite.Sprite):
 	"""Class representing our player."""
@@ -85,6 +118,16 @@ class Player(_Physics, pg.sprite.Sprite):
 			self.x_vel += self.speed
 			self.left = False
 			self.right = True
+			self.standing = False
+		elif joystick.get_axis( 3 ) > 0:
+			self.x_vel += self.speed
+			self.left = False
+			self.right = True
+			self.standing = False
+		elif joystick.get_axis( 3 ) == -1:
+			self.x_vel -= self.speed
+			self.left = True
+			self.right = False
 			self.standing = False
 		else:
 			self.standing = True
@@ -211,8 +254,8 @@ class Block(pg.sprite.Sprite):
 		
 	def draw(self, screen):
 		screen.blit(self.image, self.rect)
-        
-        
+		
+		
 
 class MovingBlock(Block):
 	"""A class to represent horizontally and vertically moving blocks."""
@@ -385,7 +428,9 @@ class Control(object):
 				  Block(pg.Color("chocolate"), (928,192,16,16)),
 				  Block(pg.Color("chocolate"), (1008,192,16,16)),
 				  Block(pg.Color("chocolate"), (1168,192,32,16)),
-				  Block(pg.Color("chocolate"), (1488,64,16,1024))
+				  Block(pg.Color("chocolate"), (1488,64,16,1024)),
+				  Block(pg.Color("olivedrab"), (1344,96,96,16)),
+
 				]
 		moving = [
 				MovingBlock(pg.Color("olivedrab"), (1248,816,48,16), 1428, 0), 
@@ -393,8 +438,7 @@ class Control(object):
 				  MovingBlock(pg.Color("olivedrab"), (640,544,32,16), 688, 1),
 				  MovingBlock(pg.Color("olivedrab"), (544,384,32,16), 704, 1),
 				  MovingBlock(pg.Color("olivedrab"), (32,224,32,16), 704, 1),
-				  MovingBlock(pg.Color("olivedrab"), (1344,96,96,16), 1344, 0),
-				  MovingBlock(pg.Color("olivedrab"), (1264,144,48,16), 1364, 0, speed=9),
+				  MovingBlock(pg.Color("olivedrab"), (1264,144,48,16), 1440, 0, speed=9),
 				  MovingBlock(pg.Color("olivedrab"), (96,304,128,16), 352, 0, speed=3)
 				]
 		enemy = [
@@ -419,9 +463,14 @@ class Control(object):
 
 	def event_loop(self):
 		"""We can always quit, and the player can sometimes jump."""
+
 		for event in pg.event.get():
 			if event.type == pg.QUIT or self.keys[pg.K_ESCAPE]:
 				self.done = True
+			elif joystick.get_button( 1 ) == 1:
+				self.player.jump(self.obstacles)
+			elif joystick.get_button( 1 ) == 0:
+				self.player.jump_cut()
 			elif event.type == pg.KEYDOWN:
 				if event.key == pg.K_SPACE:
 					self.player.jump(self.obstacles)
@@ -469,9 +518,14 @@ class Control(object):
 	def main_loop(self):
 		"""As simple as it gets."""
 		while not self.done:
+					# Possible joystick actions: JOYAXISMOTION JOYBALLMOTION JOYBUTTONDOWN JOYBUTTONUP JOYHATMOTION
 			self.event_loop()
 			self.update()
 			self.draw()
+			
+# Get count of joysticks
+			joystick_count = pg.joystick.get_count()
+			
 			pg.display.update()
 			self.clock.tick(self.fps)
 			self.display_fps()
@@ -479,14 +533,14 @@ class Control(object):
 				self.done = True
 #		if self.player.alive:
 			# add victory screen or high score
-#        elif self.player.alive:
+#		elif self.player.alive:
 			# add code to print death message
 			# add code to ask player if they'd like to play again
-        
+		
 # -------------------------------------------
-#        INTRO / DEATH SCREEN CODE
+#		INTRO / DEATH SCREEN CODE
 # -------------------------------------------
-        
+		
 # 	def game_intro(self):
 # 		intro = True
 # 		while intro:
@@ -496,8 +550,8 @@ class Control(object):
 # 					pg.quit()
 # 					quit()
 
-# # Image to display, we can also put text over it with score / press _____ to start                    
-                    
+# # Image to display, we can also put text over it with score / press _____ to start					
+					
 # 			self.display.blit(introImg,(0,0))
 # 			if event.type == pg.QUIT or self.keys[pg.K_ESCAPE]:
 # 				quitgame
