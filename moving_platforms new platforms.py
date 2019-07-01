@@ -32,32 +32,33 @@ SCREEN_SIZE = (600,600)
 
 joystick_count = pg.joystick.get_count()
 
-		# For each joystick:
+# For each joystick:
 for i in range(joystick_count):
-	joystick = pg.joystick.Joystick(i)
-	joystick.init()
+    joystick = pg.joystick.Joystick(i)
+    joystick.init()
 
-		# Get the name from the OS for the controller/joystick
-	name = joystick.get_name()
+    # Get the name from the OS for the controller/joystick
+    name = joystick.get_name()
 
-			# Usually axis run in pairs, up/down for one, and left/right for
-			# the other.
-	axes = joystick.get_numaxes()
+    # Usually axis run in pairs, up/down for one, and left/right for
+    # the other.
+    axes = joystick.get_numaxes()
 
-	for i in range( axes ):
-		axis = joystick.get_axis( i )
+    for i in range( axes ):
+        axis = joystick.get_axis( i )
 
-	buttons = joystick.get_numbuttons()
+    buttons = joystick.get_numbuttons()
 
-	for i in range( buttons ):
-		button = joystick.get_button( i )
+    for i in range( buttons ):
+        button = joystick.get_button( i )
 
-			# Hat switch. All or nothing for direction, not like joysticks.
-			# Value comes back in an array.
-	hats = joystick.get_numhats()
+    # Hat switch. All or nothing for direction, not like joysticks.
+    # Value comes back in an array.
+    hats = joystick.get_numhats()
 
-	for i in range( hats ):
-		hat = joystick.get_hat( i )
+    for i in range( hats ):
+        hat = joystick.get_hat( i )
+
 
 
 class _Physics(object):
@@ -119,15 +120,15 @@ class Player(_Physics, pg.sprite.Sprite):
 			self.left = False
 			self.right = True
 			self.standing = False
-		elif joystick.get_axis( 3 ) > 0:
-			self.x_vel += self.speed
-			self.left = False
-			self.right = True
-			self.standing = False
-		elif joystick.get_axis( 3 ) == -1:
+		elif joystick.get_axis( 3 ) < -.5:
 			self.x_vel -= self.speed
 			self.left = True
 			self.right = False
+			self.standing = False
+		elif joystick.get_axis( 3 ) > .5:
+			self.x_vel += self.speed
+			self.left = False
+			self.right = True
 			self.standing = False
 		else:
 			self.standing = True
@@ -467,16 +468,17 @@ class Control(object):
 		for event in pg.event.get():
 			if event.type == pg.QUIT or self.keys[pg.K_ESCAPE]:
 				self.done = True
-			elif joystick.get_button( 1 ) == 1:
-				self.player.jump(self.obstacles)
-			elif joystick.get_button( 1 ) == 0:
-				self.player.jump_cut()
 			elif event.type == pg.KEYDOWN:
 				if event.key == pg.K_SPACE:
 					self.player.jump(self.obstacles)
 			elif event.type == pg.KEYUP:
 				if event.key == pg.K_SPACE:
 					self.player.jump_cut()
+			elif joystick.get_button( 1 ) == 1:
+				self.player.jump(self.obstacles)
+			elif joystick.get_button( 1 ) == 0:
+				self.player.jump_cut()
+
 
 	def update(self):
 		"""Update the player, obstacles, and current viewport."""
@@ -518,7 +520,6 @@ class Control(object):
 	def main_loop(self):
 		"""As simple as it gets."""
 		while not self.done:
-					# Possible joystick actions: JOYAXISMOTION JOYBALLMOTION JOYBUTTONDOWN JOYBUTTONUP JOYHATMOTION
 			self.event_loop()
 			self.update()
 			self.draw()
